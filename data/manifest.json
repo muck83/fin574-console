@@ -2,12 +2,12 @@
  "course": "FIN 574",
  "term": "SP26",
  "kdf": {
-  "salt": "RZKQhlEwATtJkt4mLHAKTQ==",
+  "salt": "QTsCHFyh+gZDQQXRFQpwkg==",
   "iter": 250000
  },
  "check": {
-  "iv": "0wVbpcmj2yFZcImA",
-  "ct": "j45iQJ977cHR9SrbDlQK0BrDeEIPFz4TUVWlgFwzsQV7aT7deASIjBtIaVJ6eJgYj/Gpq49W1ve6ZjEQ0gZSgsdJfsj8dlHWvUL1lj6S6gbcUmA1bAXNsB2P7RuidZPcNgKksDLMT0sH16EwGU+XzKXzCvcu87P2s+qGjoi5IgTflq2CBKF5mR2t3zw0Io/wgswebK57oOuBqzP62a0oz7VIUtarQNUG72fFZLfcF5XgLJfd286FA9NvkjzYTLJhZLdAItagg5VK0hJHOyo1ZUU9dYJlbBJsr5NqMOMboAzXY354RvKfaCVgDynEh1ChGTOp8PHWxvfifDhUbWjTozBSYLEh5VUh9pQI4v+/6UDX1nQJ+mOLPJqXcKXLe3vDmDSN+uO1BlUk8igGx5qCO7NuFvQsZ5zeq8NMrGWvDm65bXZ5SnvN0JrkF/Hg"
+  "iv": "t3DKuheEENQLF9+Z",
+  "ct": "Vatlmwy++m0oqM0WBZsNfhIkf3qdxA/39+Rlueg6D6XoPKCyaq9krbdLXhkSeI3A6aNchTudUuyRwSOeR6mzxfd8koGCC4JV3FAUh5Zgavuxs3svY1trpu5o8gvWWyr78sUQumDZn5789YwNroWm49Hfb72liMIJp9NPNvj0SFeY7BB9s7XlsZmdxvvGsms4BkLnyOGCr298E0tPP5CRf5ONfmIyYa8lZJ8iwRLml8rQ3CtdcHhk6yYYBKEKr46TGLBRkJDAHHM/2JIA+ETDE8D0xrUQsSyYDpruc7i5RT59gMsSzHrV2k/rZnGFFhYrB2vpap0mQrCO6dugr1L5Dasg04uS40R0lEc/BUmCnlGb3SQkhooexbHpBi7XmW269vBdDdvztpJhs21EbaqaulMYt2WOjUiTd6yhjk3W5nONtD5WlNp+gCHzkbiS"
  },
  "assignments": [
   {
