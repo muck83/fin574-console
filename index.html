@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>FIN 574 Grader Console</title>
+<script src="config.js"></script>
+<style>
+:root{
+  --bg:#ffffff;--panel:#f6f7f9;--card:#ffffff;--ink:#1d2330;--quiet:#5d6675;--line:#dfe3ea;--line2:#c9cfd9;
+  --accent:#2563eb;--accent-bg:#eaf1fe;--good:#15803d;--good-bg:#e8f5ec;--bad:#b42318;--bad-bg:#fdecea;
+  --warn:#9a6700;--warn-bg:#fff6dc;--warn-line:#f0c75e;--zero:#5d6675;--zero-bg:#eef0f3;--flag:#7c2d12;--flag-bg:#fde8dd;
+  --shadow:0 1px 2px rgba(16,24,40,.06);--r:10px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;color:var(--ink);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14171c;--panel:#1b1f26;--card:#20252d;--ink:#e7eaf0;--quiet:#9aa3b2;--line:#2e3540;--line2:#3a4250;
+  --accent:#6ea0ff;--accent-bg:#1d2a44;--good:#5cc98a;--good-bg:#173325;--bad:#ff8a7a;--bad-bg:#3a1f1c;
+  --warn:#f3c969;--warn-bg:#352b12;--warn-line:#6d5717;--zero:#9aa3b2;--zero-bg:#262c35;--flag:#ffb38a;--flag-bg:#3a2417;
+}}
+:root[data-theme="dark"]{
+  --bg:#14171c;--panel:#1b1f26;--card:#20252d;--ink:#e7eaf0;--quiet:#9aa3b2;--line:#2e3540;--line2:#3a4250;
+  --accent:#6ea0ff;--accent-bg:#1d2a44;--good:#5cc98a;--good-bg:#173325;--bad:#ff8a7a;--bad-bg:#3a1f1c;
+  --warn:#f3c969;--warn-bg:#352b12;--warn-line:#6d5717;--zero:#9aa3b2;--zero-bg:#262c35;--flag:#ffb38a;--flag-bg:#3a2417;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.4}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:760px;margin:0 auto;padding:0 12px 120px}
+.hidden{display:none!important}
+.muted{color:var(--quiet)}
+.small{font-size:12px}
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 12px}
+.top .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:760px;margin:0 auto}
+.top select{border:1px solid var(--line2);border-radius:8px;background:var(--card);padding:5px 8px;max-width:100%}
+.top .asg{flex:1 1 220px;font-weight:600}
+.total{font-weight:700;font-size:15px;white-space:nowrap}
+.subbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:760px;margin:6px auto 0}
+.pill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line2);border-radius:999px;padding:3px 10px;background:var(--card);font-size:12px;white-space:nowrap}
+.btn{border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:6px 12px;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--quiet);font-weight:500}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.timer{font-variant-numeric:tabular-nums}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--quiet);display:inline-block}
+.dot.on{background:var(--good)}.dot.off{background:var(--bad)}.dot.wait{background:var(--warn)}
+/* chips */
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 4px;max-width:760px;margin:0 auto;scrollbar-width:thin}
+.chip{flex:0 0 auto;border:1px solid var(--line2);background:var(--card);border-radius:999px;padding:3px 11px;font-size:12px;font-weight:600}
+.chip.done{border-color:var(--good);color:var(--good)}
+.chip.dirty{border-color:var(--warn-line);color:var(--warn)}
+.chip.active{background:var(--accent-bg);border-color:var(--accent);color:var(--ink)}
+/* questions */
+.q{margin-top:18px}
+.qhead{display:flex;align-items:baseline;gap:8px;justify-content:space-between;border-bottom:2px solid var(--accent);padding-bottom:4px}
+.qhead h2{font-size:16px;margin:0}
+.qscore{font-weight:700;white-space:nowrap}
+.info{margin-top:18px;border:1px dashed var(--line2);border-radius:var(--r);padding:8px 12px;background:var(--panel)}
+.info summary{cursor:pointer;font-weight:600}
+details.key{margin:8px 0;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+details.key>summary{cursor:pointer;padding:7px 12px;font-weight:600;font-size:13px;list-style:none;display:flex;gap:8px;align-items:center}
+details.key>summary::-webkit-details-marker{display:none}
+details.key>summary:before{content:"▸";color:var(--quiet)}
+details.key[open]>summary:before{content:"▾"}
+.keybody{padding:0 12px 10px;white-space:pre-wrap;font-size:13px}
+.keybody h4{margin:10px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--quiet)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.thumbs img{max-height:120px;max-width:100%;border:1px solid var(--line2);border-radius:6px;cursor:zoom-in;background:#fff}
+.flag{margin:8px 0;border:1px solid var(--flag);background:var(--flag-bg);color:var(--flag);border-radius:var(--r);padding:8px 12px;font-size:13px;white-space:pre-wrap}
+.qnote{margin:8px 0;border:1px solid var(--warn-line);background:var(--warn-bg);border-radius:var(--r);padding:8px 12px;font-size:13px;white-space:pre-wrap}
+.part{margin:14px 0 4px;font-weight:700;font-size:13px;color:var(--quiet);text-transform:uppercase;letter-spacing:.03em}
+/* criterion card */
+.card{margin:10px 0;border:1px solid var(--line);border-radius:var(--r);background:var(--card);box-shadow:var(--shadow)}
+.card.focus{outline:2px solid var(--accent);outline-offset:1px}
+.chead{padding:9px 12px 6px;display:flex;gap:8px;justify-content:space-between;align-items:flex-start}
+.cname{font-weight:700}
+.cdesc{font-size:12px;color:var(--quiet);margin-top:2px}
+.cpts{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pills{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 6px}
+.vpill{font-size:12px;background:var(--good-bg);color:var(--good);border-radius:999px;padding:2px 9px;font-weight:600}
+.blocks{padding:2px 6px 6px}
+.bh{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--quiet);font-weight:700;margin:8px 6px 2px}
+.bnote{margin:6px 6px;border-left:3px solid var(--warn-line);background:var(--warn-bg);padding:5px 9px;font-size:12px;border-radius:0 6px 6px 0;white-space:pre-wrap}
+.bnote:before{content:"Grader only · ";font-weight:700;color:var(--warn)}
+.item{display:grid;grid-template-columns:22px 1fr auto;gap:6px 8px;align-items:start;padding:6px 6px;border-radius:8px;cursor:pointer}
+.item:hover{background:var(--panel)}
+.item.on{background:var(--accent-bg)}
+.item.dis{opacity:.4}
+.item input[type=checkbox],.item input[type=radio]{margin:2px 0 0;width:16px;height:16px;accent-color:var(--accent)}
+.itext{font-size:13px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item.on .itext,.item.open .itext{-webkit-line-clamp:unset;display:block}
+.knum{font-size:11px;color:var(--quiet);margin-right:4px;font-weight:700}
+.badge{font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap;border:1px solid;font-variant-numeric:tabular-nums}
+.badge.neg{color:var(--bad);background:var(--bad-bg);border-color:var(--bad)}
+.badge.zero{color:var(--zero);background:var(--zero-bg);border-color:var(--line2)}
+.badge.var{color:var(--warn);background:var(--warn-bg);border-color:var(--warn-line)}
+.iextra{grid-column:2/4;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);padding:3px 10px;font-size:12px;font-weight:600}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button.sel{background:var(--accent);color:#fff}
+.blank{border:1px solid var(--warn-line);background:var(--warn-bg);border-radius:6px;padding:3px 7px;font-size:12px;min-width:160px;flex:1}
+.blank.ok{border-color:var(--line2);background:var(--card)}
+.tag{font-size:11px;border-radius:6px;padding:1px 6px;background:var(--zero-bg);color:var(--quiet);font-weight:600}
+.rating{display:flex;gap:6px;flex-wrap:wrap;padding:4px 12px 10px}
+.rating button{border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:5px 9px;font-size:12px;text-align:left;max-width:100%}
+.rating button.sel{border-color:var(--accent);background:var(--accent-bg)}
+.fc{margin:4px 12px 8px;font-size:12px;color:var(--good)}
+/* composer */
+.composer{border-top:1px solid var(--line);background:var(--panel);border-radius:0 0 var(--r) var(--r);padding:8px 12px 10px}
+.qcomposer{margin:10px 0;border:1px solid var(--line2);border-radius:var(--r);background:var(--panel);padding:8px 12px 10px}
+.preview{font-size:12px;white-space:pre-wrap;max-height:9.5em;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin:4px 0 8px}
+.preview.empty{color:var(--quiet);font-style:italic}
+.crow{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.enter{font-weight:700}
+.enter .rl{font-weight:500;color:var(--quiet)}
+.warnline{font-size:12px;color:var(--warn);margin-top:4px}
+.copybtn.copied{background:var(--good);border-color:var(--good);color:#fff}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--quiet);font-weight:700}
+/* assignment comment */
+.acard{margin-top:22px;border:2px solid var(--accent);border-radius:var(--r);background:var(--card);padding:10px 12px}
+.acard h2{font-size:16px;margin:0 0 6px}
+.toggles{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0}
+.toggles label{display:flex;gap:6px;align-items:center;font-size:13px}
+.math{font-size:13px;font-variant-numeric:tabular-nums}
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(10,14,20,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.dialog{background:var(--card);border-radius:12px;max-width:420px;width:100%;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.dialog h1{font-size:18px;margin:0 0 6px}
+.dialog input,.dialog select{width:100%;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;margin:6px 0 10px;background:var(--bg)}
+.lightbox img{max-width:96vw;max-height:92vh;background:#fff;border-radius:6px}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;z-index:60;opacity:0;transition:opacity .15s;pointer-events:none}
+.toast.show{opacity:1}
+.help{font-size:12px;color:var(--quiet);margin-top:24px;border-top:1px solid var(--line);padding-top:10px}
+kbd{font-family:inherit;font-size:11px;border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--card)}
+@media (max-width:520px){.wrap{padding:0 8px 120px}.top{padding:6px 8px}}
+</style>
+</head>
+<body>
+<div id="unlock" class="overlay">
+  <div class="dialog">
+    <h1>FIN 574 Grader Console</h1>
+    <p class="muted small">Enter the team passphrase from the grader channel. The rubrics are encrypted on this site.</p>
+    <input id="pass" type="password" autocomplete="current-password" placeholder="Team passphrase">
+    <label class="small"><input id="remember" type="checkbox" checked style="width:auto;margin:0 6px 0 0">Remember on this computer</label>
+    <div id="unlockErr" class="warnline hidden"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="unlockBtn" class="btn primary">Unlock</button></div>
+  </div>
+</div>
+
+<div id="who" class="overlay hidden">
+  <div class="dialog">
+    <h1>Who is grading?</h1>
+    <p class="muted small">Your name is used for your grading range and your timing records.</p>
+    <select id="whoSel"></select>
+    <div style="display:flex;justify-content:flex-end"><button id="whoBtn" class="btn primary">Continue</button></div>
+  </div>
+</div>
+
+<div class="top hidden" id="top">
+  <div class="row">
+    <select id="asgSel" class="asg" aria-label="Assignment"></select>
+    <span class="total" id="total" title="Total for this submission">–</span>
+  </div>
+  <div class="subbar">
+    <span class="pill" id="graderPill" title="Change grader" style="cursor:pointer">–</span>
+    <span class="pill" id="rangePill">–</span>
+    <span class="pill"><span class="dot" id="timeDot"></span><span id="subLbl">Submission 1</span> · <span class="timer" id="timer">0:00</span></span>
+    <span style="flex:1"></span>
+    <button class="btn ghost" id="pauseBtn" title="Pause the timer (break)">Pause</button>
+    <button class="btn primary" id="nextBtn" title="Finish this submission and clear (N)">Next submission</button>
+  </div>
+  <nav class="chips" id="chips"></nav>
+</div>
+
+<main class="wrap" id="main"></main>
+
+<div id="lightbox" class="overlay lightbox hidden"><img alt="Answer key"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+'use strict';
+const CFG = Object.assign({endpoint:'', writeToken:'', idleCapMinutes:10}, window.FIN574_CONFIG || {});
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem('fin574.'+k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('fin574.'+k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem('fin574.'+k); }catch(e){} }
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => (Math.round(n * 100) / 100).toString();
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+/* ---------------- crypto ---------------- */
+let KEY = null, MANIFEST = null, GRADERS = [];
+async function deriveKey(pass){
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt:b64d(MANIFEST.kdf.salt), iterations:MANIFEST.kdf.iter, hash:'SHA-256'},
+    base, {name:'AES-GCM', length:256}, true, ['decrypt']);
+}
+async function decrypt(blob){
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64d(blob.iv)}, KEY, b64d(blob.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+async function tryKey(k){
+  KEY = k;
+  try{ const c = await decrypt(MANIFEST.check); GRADERS = c.graders || []; return true; }
+  catch(e){ KEY = null; return false; }
+}
+async function unlock(){
+  const pass = $('#pass').value.trim();
+  if(!pass) return;
+  $('#unlockBtn').disabled = true; $('#unlockBtn').textContent = 'Unlocking…';
+  const k = await deriveKey(pass);
+  if(await tryKey(k)){
+    if($('#remember').checked){ const raw = await crypto.subtle.exportKey('raw', k); LS.set('key:'+MANIFEST.kdf.salt, btoa(String.fromCharCode(...new Uint8Array(raw)))); }
+    $('#unlock').classList.add('hidden'); afterUnlock();
+  } else {
+    $('#unlockErr').textContent = 'That passphrase did not work. Check the grader channel for the current one.';
+    $('#unlockErr').classList.remove('hidden');
+  }
+  $('#unlockBtn').disabled = false; $('#unlockBtn').textContent = 'Unlock';
+}
+
+/* ---------------- state ---------------- */
+let A = null;            // current assignment data
+let S = null;            // selection state for the current submission
+let GRADER = LS.get('grader', '');
+let focusTarget = null;
+
+function freshState(){
+  return {items:{}, ratings:{}, copied:{}, late:false, format:false, variant:null};
+}
+function itemState(id){ return S.items[id] || (S.items[id] = {on:false, tier:null, n:1, blanks:{}}); }
+
+/* ---------------- model helpers ---------------- */
+const crits = q => q.nodes.filter(n => n.t === 'crit').map(n => n.c);
+const items = c => c.blocks.filter(b => b.t === 'item');
+function myScope(){
+  const s = (A.sections || []).find(x => x.grader === GRADER);
+  return s && s.scope ? s.scope : null;
+}
+function inScope(id){ const sc = myScope(); return !sc || sc.includes(id); }
+function gradedQs(){ return A.questions.filter(q => q.kind === 'graded' && inScope(q.id)); }
+function isRatingCrit(c){ return items(c).length === 0 && c.ratings.length > 1 && !c.ratings.some(r => r.range); }
+
+function itemValue(it){
+  const st = S.items[it.id]; if(!st || !st.on) return 0;
+  let v = it.tiers ? (st.tier ?? it.tiers[0]) : it.pts;
+  if(it.perInstance){ v = v * (st.n || 1); if(it.max) v = Math.max(v, -it.max); }
+  return v;
+}
+function critDeduct(c){
+  let d = items(c).reduce((s, it) => s + itemValue(it), 0);
+  if(c.maxDeduct) d = Math.max(d, -c.maxDeduct);
+  return d;
+}
+function critScore(c){
+  if(c.points == null) return null;
+  if(isRatingCrit(c)){ const i = S.ratings[c.id] ?? 0; return c.ratings[i].pts; }
+  const d = critDeduct(c);
+  let s = c.points + d;
+  if(d < 0 && c.minScore != null) s = Math.max(s, c.minScore);
+  return Math.max(0, s);
+}
+function critOver(c){ return c.points != null && !isRatingCrit(c) && c.points + critDeduct(c) < 0 ? -(c.points + critDeduct(c)) : 0; }
+function qMax(q){ return q.points ?? crits(q).reduce((s, c) => s + (c.points || 0), 0); }
+function qScore(q){
+  const cs = crits(q);
+  if(cs.length && cs.every(c => c.points != null)) return cs.reduce((s, c) => s + critScore(c), 0);
+  let d = cs.reduce((s, c) => s + critDeduct(c), 0);
+  if(q.maxDeduct) d = Math.max(d, -q.maxDeduct);
+  return Math.max(0, Math.min(qMax(q), qMax(q) + d));
+}
+function anyDeduction(){ return gradedQs().some(q => qScore(q) < qMax(q) - 1e-9); }
+function anyTicked(){ return Object.values(S.items).some(s => s.on); }
+function totals(){
+  const qs = gradedQs();
+  const max = qs.reduce((s, q) => s + qMax(q), 0);
+  const raw = qs.reduce((s, q) => s + qScore(q), 0);
+  let pen = 0;
+  if(S.late && A.latePenalty) pen += A.latePenalty;
+  if(S.format && A.formatPenalty) pen += A.formatPenalty;
+  return {max, raw, pen, final: Math.max(0, raw - pen)};
+}
+function ratingLabel(c){
+  if(!c.ratings.length || c.points == null) return '';
+  const s = critScore(c);
+  if(isRatingCrit(c)) return c.ratings[S.ratings[c.id] ?? 0].label;
+  if(s >= c.points - 1e-9) return c.ratings[0].label || 'Full Credit';
+  const r = c.ratings.find(r => r.range) || c.ratings[c.ratings.length - 1];
+  return r.label;
+}
+
+/* ---------------- comment text ---------------- */
+function itemText(it){
+  const st = S.items[it.id] || {};
+  let t = it.text;
+  if(it.tiers && it.tierText){
+    const v = st.tier ?? it.tiers[0];
+    const unit = /point/i.test(it.tierText) ? (Math.abs(v) === 1 ? 'point' : 'points') : (Math.abs(v) === 1 ? 'pt' : 'pts');
+    t = t.replace(it.tierText, '(' + fmt(v) + ' ' + unit + ')');
+  }
+  if(it.perInstance && (st.n || 1) > 1){
+    const n = st.n, unit = Math.abs(it.pts);
+    t = t.replace(new RegExp('^' + fmt(unit).replace('.', '\\.') + ' points?'), fmt(unit * n) + ' points')
+         .replace(/\ban incorrect square\b/, n + ' incorrect squares');
+  }
+  (it.blanks || []).forEach((b, i) => {
+    const v = (st.blanks || {})[i];
+    if(v && v.trim()) t = t.split(b).join(b === '"..."' || b === '“...”' ? '"' + v.trim() + '"' : v.trim());
+  });
+  return t.trim();
+}
+function blanksMissing(it){
+  const st = S.items[it.id]; if(!st || !st.on || !it.blanks) return false;
+  return it.blanks.some((b, i) => !((st.blanks || {})[i] || '').trim());
+}
+function textFor(list){
+  const out = []; const leads = new Set();
+  list.forEach(it => {
+    if(it.lead && !leads.has(it.lead)){ leads.add(it.lead); out.push(it.lead); }
+    out.push(itemText(it));
+  });
+  return out.join('\n\n');
+}
+function onItems(c){ return items(c).filter(it => S.items[it.id] && S.items[it.id].on); }
+function critComment(c){
+  const on = onItems(c);
+  if(on.length) return textFor(on);
+  return c.fullCredit || '';
+}
+function qComment(q){
+  const on = crits(q).flatMap(onItems);
+  if(on.length) return textFor(on);
+  return q.fullCredit || crits(q).map(c => c.fullCredit).filter(Boolean).join('\n\n');
+}
+function targetsList(){
+  if(A.mode === 'question') return gradedQs().map(q => ({id:q.id, q}));
+  return gradedQs().flatMap(q => crits(q).map(c => ({id:c.id, q, c})));
+}
+function targetInfo(id){
+  if(id === 'comment') return {id, label:'Assignment comment'};
+  const t = targetsList().find(t => t.id === id); if(!t) return null;
+  if(t.c){
+    const txt = critComment(t.c);
+    const missing = onItems(t.c).some(blanksMissing);
+    return {id, label:t.c.name, text:txt, missing, score:critScore(t.c), max:t.c.points, rating:ratingLabel(t.c), over:critOver(t.c), auto:!onItems(t.c).length};
+  }
+  const txt = qComment(t.q);
+  const missing = crits(t.q).flatMap(onItems).some(blanksMissing);
+  return {id, label:t.q.title, text:txt, missing, score:qScore(t.q), max:qMax(t.q), auto:!crits(t.q).flatMap(onItems).length};
+}
+function chooseVariant(){
+  const cm = A.comments || [];
+  const base = cm.filter(c => !/late|format/i.test(c.label));
+  if(S.variant != null && base[S.variant]) return S.variant;
+  if(!anyDeduction() && !anyTicked()) return 0;
+  const reversed = Object.entries(S.items).some(([id, st]) => st.on && /reversed/i.test(findItem(id)?.text || ''));
+  const rIdx = base.findIndex(c => /revers/i.test(c.label));
+  if(reversed && rIdx >= 0) return rIdx;
+  const dIdx = base.findIndex((c, i) => i > 0 && /deduction/i.test(c.label) && !/revers/i.test(c.label));
+  return dIdx >= 0 ? dIdx : Math.min(1, base.length - 1);
+}
+function assignmentComment(){
+  const cm = A.comments || [];
+  const base = cm.filter(c => !/late|format/i.test(c.label));
+  const parts = [];
+  const v = base[chooseVariant()];
+  if(v) parts.push(v.text);
+  if(S.format){ const f = cm.find(c => /format/i.test(c.label)); if(f) parts.push(f.text); }
+  if(S.late){ const l = cm.find(c => /late/i.test(c.label)); if(l) parts.push(l.text); }
+  return parts.join('\n\n');
+}
+let ITEMIDX = {};
+function findItem(id){ return ITEMIDX[id]; }
+
+/* ---------------- rendering ---------------- */
+function badge(it){
+  if(it.tiers) return `<span class="badge var">${it.tiers.map(fmt).join(' / ')}</span>`;
+  if(it.perInstance) return `<span class="badge var">${fmt(it.pts)} each</span>`;
+  return it.pts < 0 ? `<span class="badge neg">${fmt(it.pts)}</span>` : `<span class="badge zero">note · 0</span>`;
+}
+function renderItem(it, k){
+  const st = S.items[it.id] || {};
+  const on = !!st.on;
+  const kind = it.excl ? 'radio' : 'checkbox';
+  let extra = '';
+  if(on && it.tiers){
+    extra += `<span class="seg">${it.tiers.map(v => `<button data-act="tier" data-item="${it.id}" data-v="${v}" class="${(st.tier ?? it.tiers[0]) === v ? 'sel' : ''}">${fmt(v)}</button>`).join('')}</span>`;
+  }
+  if(on && it.perInstance){
+    extra += `<span class="seg"><button data-act="n" data-item="${it.id}" data-d="-1">−</button><button disabled>${st.n || 1}×</button><button data-act="n" data-item="${it.id}" data-d="1">+</button></span>`;
+  }
+  if(on && it.blanks){
+    extra += it.blanks.map((b, i) => `<input class="blank ${((st.blanks||{})[i]||'').trim() ? 'ok' : ''}" data-act="blank" data-item="${it.id}" data-i="${i}" placeholder="Fill in: ${esc(b)}" value="${esc((st.blanks||{})[i]||'')}">`).join('');
+  }
+  if(it.override) extra += `<span class="tag">Replaces the other deductions here</span>`;
+  if(it.once) extra += `<span class="tag">Once per assignment</span>`;
+  if(it.lead) extra += on ? `<span class="tag">Adds the partial-credit sentence</span>` : '';
+  const dis = isDisabledByOverride(it) ? ' dis' : '';
+  return `<div class="item${on ? ' on' : ''}${dis}" data-act="toggle" data-item="${it.id}">
+    <input type="${kind}" tabindex="-1" ${on ? 'checked' : ''} aria-label="Select deduction">
+    <div class="itext">${k <= 9 ? `<span class="knum">${k}</span>` : ''}${esc(it.text)}</div>
+    ${badge(it)}
+    ${extra ? `<div class="iextra">${extra}</div>` : ''}
+  </div>`;
+}
+function isDisabledByOverride(it){
+  const c = ITEMCRIT[it.id]; if(!c) return false;
+  return items(c).some(o => o.override && o !== it && S.items[o.id] && S.items[o.id].on);
+}
+let ITEMCRIT = {};
+function renderCrit(c, q){
+  let k = 0;
+  if(A.mode === 'question'){ const cs = crits(q); for(const o of cs){ if(o === c) break; k += items(o).length; } }
+  const blocks = c.blocks.map(b => {
+    if(b.t === 'h') return `<div class="bh">${esc(b.text)}</div>`;
+    if(b.t === 'note') return `<div class="bnote">${esc(b.text)}</div>`;
+    if(b.t === 'item'){ k++; return renderItem(b, k); }
+    return '';
+  }).join('');
+  const rating = isRatingCrit(c) ? `<div class="rating">${c.ratings.map((r, i) =>
+      `<button data-act="rating" data-crit="${c.id}" data-i="${i}" class="${(S.ratings[c.id] ?? 0) === i ? 'sel' : ''}"><b>${fmt(r.pts)} pts · ${esc(r.label)}</b>${r.desc ? `<br><span class="muted">${esc(r.desc)}</span>` : ''}</button>`).join('')}</div>` : '';
+  const sc = critScore(c);
+  const pts = c.points == null ? (A.mode === 'question' ? '' : '<span class="muted small">comment only</span>')
+            : `${fmt(sc)} / ${fmt(c.points)}`;
+  const composer = A.mode === 'criterion' ? renderComposer(c.id) : '';
+  return `<section class="card" id="card-${c.id}" data-target="${A.mode === 'criterion' ? c.id : q.id}">
+    <div class="chead"><div><div class="cname">${esc(c.name)}</div>${c.desc ? `<div class="cdesc">${esc(c.desc)}</div>` : ''}</div><div class="cpts">${pts}</div></div>
+    ${c.pills.length ? `<div class="pills">${c.pills.map(p => `<span class="vpill">${esc(p)}</span>`).join('')}</div>` : ''}
+    ${rating}
+    ${c.fullCredit && !isRatingCrit(c) ? `<div class="fc">Full-credit comment available: copied automatically when nothing is ticked.</div>` : ''}
+    <div class="blocks">${blocks}</div>
+    ${composer}
+  </section>`;
+}
+function renderComposer(id){
+  const t = targetInfo(id);
+  if(!t) return '';
+  const copiedHash = S.copied[id];
+  const hash = (t.text || '') + '|' + t.score;
+  const state = copiedHash == null ? '' : (copiedHash === hash ? 'copied' : 'changed');
+  const max = t.max != null ? ` / ${fmt(t.max)}` : '';
+  const enter = t.score != null ? `Enter <span class="tnum">${fmt(t.score)}</span>${max}${t.rating ? ` <span class="rl">· ${esc(t.rating)}</span>` : ''}` : '<span class="rl">No points to enter</span>';
+  const empty = !t.text;
+  if(empty && !t.over) return `<div class="${A.mode === 'question' ? 'qcomposer' : 'composer'}" id="comp-${id}"><div class="crow"><span class="enter">${enter}</span><span class="muted small">Full credit · nothing to paste</span></div></div>`;
+  return `<div class="${A.mode === 'question' ? 'qcomposer' : 'composer'}" id="comp-${id}">
+    <div class="lbl">${A.mode === 'question' ? 'Paste under ' + esc(id) + ' in the quiz' : 'Paste in the rubric comment for ' + esc(id)}</div>
+    <div class="preview ${empty ? 'empty' : ''}">${empty ? 'Full credit. Nothing to paste.' : esc(t.text)}</div>
+    <div class="crow"><span class="enter">${enter}</span>
+      <button class="btn ${empty ? '' : 'primary'} copybtn ${state === 'copied' ? 'copied' : ''}" data-act="copy" data-target="${id}" ${t.missing || empty ? 'disabled' : ''}>${state === 'copied' ? 'Copied ✓' : (state === 'changed' ? 'Copy again' : 'Copy')}</button></div>
+    ${t.missing ? '<div class="warnline">Fill in the highlighted blank before copying.</div>' : ''}
+    ${t.over ? `<div class="warnline">Deductions exceed this criterion by ${fmt(t.over)} pts. Score stops at 0; take the rest from another criterion if the rubric says so.</div>` : ''}
+    ${state === 'changed' ? '<div class="warnline">Changed since you copied. Copy again and replace the comment in Canvas.</div>' : ''}
+  </div>`;
+}
+function renderImages(list){
+  if(!list.length) return '';
+  return `<div class="thumbs">${list.map(im => `<img src="${im.data}" data-act="zoom" alt="${im.role === 'question' ? 'Question figure' : 'Answer key figure'}" loading="lazy">`).join('')}</div>`;
+}
+function renderQuestion(q){
+  if(q.kind !== 'graded'){
+    if(!inScopeInfo(q)) return '';
+    const body = [...q.prompt, ...(q.answer.length ? ['Answer:\n' + q.answer.join('\n\n')] : [])].join('\n\n');
+    return `<details class="info" id="q-${q.id}"><summary>${esc(q.title)}${q.kind === 'auto' ? ' · autograded, no grading needed' : ''}</summary>
+      <div class="keybody">${esc(body)}</div>${renderImages(q.images)}${q.notes.map(n => `<div class="${n.kind === 'flag' ? 'flag' : 'qnote'}">${esc(n.text)}</div>`).join('')}</details>`;
+  }
+  if(!inScope(q.id)) return '';
+  const qImgs = q.images.filter(i => i.role === 'question'), aImgs = q.images.filter(i => i.role === 'answer');
+  const keyOpen = LS.get('keyOpen', false) ? 'open' : '';
+  const nodes = q.nodes.map(n => n.t === 'part' ? `<div class="part">${esc(n.text)}</div>` : renderCrit(n.c, q)).join('');
+  return `<div class="q" id="q-${q.id}">
+    <div class="qhead"><h2>${esc(q.title)}</h2><span class="qscore" id="qs-${q.id}">${fmt(qScore(q))} / ${fmt(qMax(q))}</span></div>
+    ${q.notes.map(n => `<div class="${n.kind === 'flag' ? 'flag' : 'qnote'}">${n.kind === 'flag' ? '<b>Integrity check · </b>' : '<b>Grader only · </b>'}${esc(n.text)}</div>`).join('')}
+    <details class="key" ${keyOpen} data-keytoggle="1"><summary>Question and answer key${aImgs.length ? ` · ${aImgs.length} figure${aImgs.length > 1 ? 's' : ''}` : ''}</summary>
+      <div class="keybody">${q.prompt.length ? `<h4>Question</h4>${esc(q.prompt.join('\n\n'))}` : ''}${renderImages(qImgs)}${q.answer.length ? `<h4>Answer key</h4>${esc(q.answer.join('\n\n'))}` : ''}</div>
+      <div style="padding:0 12px 6px">${renderImages(aImgs)}</div>
+    </details>
+    ${nodes}
+    ${A.mode === 'question' ? renderComposer(q.id) : ''}
+  </div>`;
+}
+function inScopeInfo(q){
+  const sc = myScope(); if(!sc) return true;
+  const m = q.title.match(/Questions?\s+(\d+)\s*-\s*(\d+)/);
+  if(!m) return true;
+  return sc.some(id => { const n = parseInt(id.slice(1)); return n >= +m[1] && n <= +m[2]; });
+}
+function renderAssignmentCard(){
+  const sc = myScope();
+  if(sc && !sc.includes('comment')) return `<div class="acard"><h2>Assignment comment</h2><p class="muted small">Your section does not add the assignment comment for this exam.</p></div>`;
+  const cm = A.comments || [];
+  const base = cm.filter(c => !/late|format/i.test(c.label));
+  const v = chooseVariant();
+  const t = totals();
+  const hasLate = cm.some(c => /late/i.test(c.label)), hasFmt = cm.some(c => /format/i.test(c.label));
+  const txt = assignmentComment();
+  const hash = txt + '|' + t.final;
+  const copied = S.copied.comment;
+  const state = copied == null ? '' : (copied === hash ? 'copied' : 'changed');
+  const lateNote = A.latePenalty ? `Late (up to 2 hours): −${fmt(A.latePenalty)}` : 'Late';
+  const fmtNote = A.formatPenalty ? `Wrong file format: −${fmt(A.formatPenalty)} (override the grade in Canvas)` : 'Wrong file format';
+  return `<div class="acard" id="q-comment" data-target="comment">
+    <h2>Assignment comment</h2>
+    <label class="small muted">Version</label>
+    <select data-act="variant" style="width:100%;border:1px solid var(--line2);border-radius:8px;padding:6px 8px;background:var(--card);margin:4px 0 6px">
+      ${base.map((c, i) => `<option value="${i}" ${i === v ? 'selected' : ''}>${esc(c.label.replace(/\s+/g, ' '))}${i === v && S.variant == null ? ' (auto)' : ''}</option>`).join('')}
+    </select>
+    <div class="toggles">
+      ${hasLate ? `<label><input type="checkbox" data-act="late" ${S.late ? 'checked' : ''}>${esc(lateNote)}</label>` : ''}
+      ${hasFmt ? `<label><input type="checkbox" data-act="format" ${S.format ? 'checked' : ''}>${esc(fmtNote)}</label>` : ''}
+    </div>
+    <div class="math">${sc ? 'Your questions' : 'Rubric total'}: <b>${fmt(t.raw)} / ${fmt(t.max)}</b>${t.pen ? ` − ${fmt(t.pen)} penalty = <b>${fmt(t.final)}</b>` : ''}</div>
+    <div class="preview">${esc(txt)}</div>
+    <div class="crow"><span class="enter">${S.format ? `Override grade to <span class="tnum">${fmt(t.final)}</span>` : (S.late ? `Late penalty applied: final <span class="tnum">${fmt(t.final)}</span>` : '<span class="rl">General comment for the submission</span>')}</span>
+      <button class="btn primary copybtn ${state === 'copied' ? 'copied' : ''}" data-act="copy" data-target="comment">${state === 'copied' ? 'Copied ✓' : (state === 'changed' ? 'Copy again' : 'Copy')}</button></div>
+    ${state === 'changed' ? '<div class="warnline">Changed since you copied. Copy again and replace the comment in Canvas.</div>' : ''}
+  </div>`;
+}
+function renderAll(){
+  ITEMIDX = {}; ITEMCRIT = {};
+  A.questions.forEach(q => crits(q).forEach(c => items(c).forEach(it => { ITEMIDX[it.id] = it; ITEMCRIT[it.id] = c; })));
+  const sec = (A.sections || []).find(x => x.grader === GRADER);
+  $('#rangePill').textContent = sec ? `Your range: ${sec.from}–${sec.to}${sec.scope ? ' · ' + sec.scope.filter(s => s !== 'comment').join(', ') : ''}` : 'No range listed for you';
+  $('#graderPill').textContent = GRADER || 'Choose grader';
+  $('#main').innerHTML = A.questions.map(renderQuestion).join('') + renderAssignmentCard() +
+    `<div class="help"><b>Keys:</b> <kbd>J</kbd>/<kbd>K</kbd> next/previous box · <kbd>1</kbd>–<kbd>9</kbd> tick a deduction in the focused box · <kbd>C</kbd> copy the focused box · <kbd>N</kbd> next submission · <kbd>Esc</kbd> leave a text field.<br>
+     Amber "Grader only" notes come from the red text in the rubric workbooks and are never copied. Mode: ${A.mode === 'question' ? 'quiz/exam, one comment per question' : 'rubric, one comment per criterion'}.</div>`;
+  renderChips(); updateTotals(); setFocus(focusTarget && document.querySelector(`[data-target="${focusTarget}"]`) ? focusTarget : null, false);
+}
+function renderChips(){
+  const ts = A.mode === 'question' ? gradedQs().map(q => ({id:q.id, el:'q-' + q.id})) : gradedQs().map(q => ({id:q.id, el:'q-' + q.id, crits:crits(q).map(c => c.id)}));
+  const done = id => { const t = targetInfo(id); if(!t) return ''; const h = (t.text || '') + '|' + t.score; return S.copied[id] == null ? '' : (S.copied[id] === h ? 'done' : 'dirty'); };
+  $('#chips').innerHTML = ts.map(t => {
+    let cls = '';
+    if(A.mode === 'question') cls = done(t.id);
+    else { const st = t.crits.map(id => { const ti = targetInfo(id); return ti && ti.text ? done(id) : 'done'; }); cls = st.includes('dirty') ? 'dirty' : (st.every(x => x === 'done') && t.crits.some(id => S.copied[id] != null) ? 'done' : ''); }
+    return `<button class="chip ${cls}" data-act="jump" data-el="${t.el}">${esc(t.id)}${cls === 'done' ? ' ✓' : ''}</button>`;
+  }).join('') + `<button class="chip ${S.copied.comment != null ? 'done' : ''}" data-act="jump" data-el="q-comment">Comment${S.copied.comment != null ? ' ✓' : ''}</button>`;
+}
+function rerenderTarget(id){
+  // re-render the card(s) affected by a change, keep scroll position
+  const y = window.scrollY;
+  if(A.mode === 'criterion'){
+    const t = targetsList().find(t => t.id === id);
+    if(t){ const el = document.getElementById('card-' + t.c.id); if(el){ el.outerHTML = renderCrit(t.c, t.q); } }
+  } else {
+    const q = A.questions.find(q => q.id === id);
+    if(q){ const el = document.getElementById('q-' + q.id); if(el){ const open = el.querySelector('details.key')?.open; el.outerHTML = renderQuestion(q); if(open) document.querySelector(`#q-${CSS.escape(q.id)} details.key`).open = true; } }
+  }
+  const ac = document.getElementById('q-comment'); if(ac) ac.outerHTML = renderAssignmentCard();
+  renderChips(); updateTotals(); setFocus(focusTarget, false);
+  window.scrollTo(0, y);
+}
+function updateTotals(){
+  if(!A) return;
+  const t = totals();
+  $('#total').textContent = `${fmt(t.final)} / ${fmt(t.max)}`;
+  gradedQs().forEach(q => { const el = document.getElementById('qs-' + q.id); if(el) el.textContent = `${fmt(qScore(q))} / ${fmt(qMax(q))}`; });
+}
+function targetOfItem(itemId){
+  const c = ITEMCRIT[itemId];
+  if(A.mode === 'criterion') return c.id;
+  return A.questions.find(q => crits(q).includes(c)).id;
+}
+
+/* ---------------- focus + keyboard ---------------- */
+function focusables(){ return [...document.querySelectorAll('[data-target]')].map(e => e.dataset.target).filter((v, i, a) => a.indexOf(v) === i); }
+function setFocus(id, scroll = true){
+  focusTarget = id;
+  document.querySelectorAll('.card.focus,.acard.focus,.qcomposer.focus').forEach(e => e.classList.remove('focus'));
+  if(!id) return;
+  const els = A.mode === 'question' && id !== 'comment' ? [...document.querySelectorAll(`#q-${CSS.escape(id)} .card`), document.getElementById('comp-' + id)] : [document.querySelector(`[data-target="${CSS.escape(id)}"]`)];
+  els.forEach(e => e && e.classList.add('focus'));
+  if(scroll && els[0]) els[0].scrollIntoView({block:'start', behavior:'smooth'});
+}
+document.addEventListener('keydown', e => {
+  if(!A || !$('#unlock').classList.contains('hidden')) return;
+  if(e.target.matches('input,select,textarea')){ if(e.key === 'Escape') e.target.blur(); return; }
+  if(e.metaKey || e.ctrlKey || e.altKey) return;
+  const f = focusables();
+  if(e.key === 'j' || e.key === 'k'){
+    const i = f.indexOf(focusTarget);
+    const n = e.key === 'j' ? Math.min(f.length - 1, i + 1) : Math.max(0, i - 1);
+    setFocus(f[i < 0 ? 0 : n]); e.preventDefault();
+  } else if(/^[1-9]$/.test(e.key) && focusTarget && focusTarget !== 'comment'){
+    let its;
+    if(A.mode === 'criterion'){ const t = targetsList().find(t => t.id === focusTarget); its = t ? items(t.c) : []; }
+    else { const q = A.questions.find(q => q.id === focusTarget); its = q ? crits(q).flatMap(items) : []; }
+    const it = its[+e.key - 1]; if(it) toggleItem(it.id);
+    e.preventDefault();
+  } else if(e.key === 'c' && focusTarget){ doCopy(focusTarget); e.preventDefault(); }
+  else if(e.key === 'n'){ nextSubmission(); e.preventDefault(); }
+});
+
+/* ---------------- interactions ---------------- */
+function toggleItem(id){
+  const it = ITEMIDX[id]; if(!it) return;
+  const st = itemState(id);
+  const c = ITEMCRIT[id];
+  if(isDisabledByOverride(it) && !st.on) return;
+  st.on = !st.on;
+  if(st.on){
+    if(it.excl) items(c).forEach(o => { if(o !== it && o.excl === it.excl && S.items[o.id]) S.items[o.id].on = false; });
+    if(it.override) items(c).forEach(o => { if(o !== it && S.items[o.id]) S.items[o.id].on = false; });
+  }
+  touch();
+  rerenderTarget(targetOfItem(id));
+}
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  const act = el.dataset.act;
+  if(act === 'toggle'){
+    if(e.target.closest('.iextra')) return;
+    if(e.target.closest('.itext') && !ITEMIDX[el.dataset.item]) return;
+    toggleItem(el.dataset.item); setFocus(targetOfItem(el.dataset.item), false);
+  } else if(act === 'tier'){ itemState(el.dataset.item).tier = +el.dataset.v; touch(); rerenderTarget(targetOfItem(el.dataset.item)); }
+  else if(act === 'n'){ const st = itemState(el.dataset.item); st.n = Math.max(1, Math.min(9, (st.n || 1) + +el.dataset.d)); touch(); rerenderTarget(targetOfItem(el.dataset.item)); }
+  else if(act === 'rating'){ S.ratings[el.dataset.crit] = +el.dataset.i; touch(); const t = targetsList().find(t => t.c && t.c.id === el.dataset.crit) || targetsList().find(t => crits(t.q).some(c => c.id === el.dataset.crit)); rerenderTarget(t ? t.id : null); }
+  else if(act === 'copy'){ doCopy(el.dataset.target); }
+  else if(act === 'jump'){ const t = document.getElementById(el.dataset.el); if(t){ t.scrollIntoView({block:'start', behavior:'smooth'}); const ft = t.dataset.target || (t.querySelector('[data-target]') || {}).dataset?.target; if(ft) setFocus(ft, false); } }
+  else if(act === 'zoom'){ const lb = $('#lightbox'); lb.querySelector('img').src = el.src; lb.classList.remove('hidden'); }
+});
+document.addEventListener('input', e => {
+  const el = e.target;
+  if(el.dataset.act === 'blank'){
+    const st = itemState(el.dataset.item); st.blanks = st.blanks || {}; st.blanks[el.dataset.i] = el.value;
+    el.classList.toggle('ok', !!el.value.trim());
+    touch();
+    // update composer only (keep input focus)
+    const tid = targetOfItem(el.dataset.item);
+    const comp = document.getElementById('comp-' + tid); if(comp) comp.outerHTML = renderComposer(tid);
+    renderChips();
+  }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if(el.dataset.act === 'late'){ S.late = el.checked; touch(); rerenderTarget(null); }
+  else if(el.dataset.act === 'format'){ S.format = el.checked; touch(); rerenderTarget(null); }
+  else if(el.dataset.act === 'variant'){ S.variant = +el.value; touch(); rerenderTarget(null); }
+});
+document.addEventListener('toggle', e => { if(e.target.dataset && e.target.dataset.keytoggle) LS.set('keyOpen', e.target.open); }, true);
+$('#lightbox').addEventListener('click', () => $('#lightbox').classList.add('hidden'));
+
+async function writeClipboard(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try{ ok = document.execCommand('copy'); }catch(_){}
+    ta.remove(); return ok;
+  }
+}
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1600); }
+async function doCopy(id){
+  let text, hash, label;
+  if(id === 'comment'){
+    const sc = myScope(); if(sc && !sc.includes('comment')) return;
+    text = assignmentComment(); hash = text + '|' + totals().final; label = 'assignment comment';
+  } else {
+    const t = targetInfo(id); if(!t || !t.text || t.missing) { if(t && t.missing) toast('Fill in the blank first'); return; }
+    text = t.text; hash = t.text + '|' + t.score; label = id + ' comment' + (t.score != null && t.max != null ? `, enter ${fmt(t.score)}/${fmt(t.max)}` : '');
+  }
+  text = text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  const ok = await writeClipboard(text);
+  if(!ok){ toast('Copy blocked by the browser. Select the preview text and copy it.'); return; }
+  S.copied[id] = hash;
+  touch(); logEvent('copy', id);
+  toast('Copied ' + label);
+  rerenderTarget(id === 'comment' ? null : id);
+}
+
+/* ---------------- timing ---------------- */
+let SUB = null; // {seq, startedAt, started:bool}
+function subKey(){ return 'sub:' + GRADER + ':' + A.id; }
+function loadSub(){
+  SUB = LS.get(subKey(), null) || {seq:1, started:false, startedAt:null, paused:false, pausedAt:null, pausedMs:0};
+  S = LS.get('state:' + GRADER + ':' + A.id, null) || freshState();
+  updateSubUI();
+}
+function saveSub(){ LS.set(subKey(), SUB); LS.set('state:' + GRADER + ':' + A.id, S); }
+function touch(){
+  if(!SUB.started){ SUB.started = true; SUB.startedAt = Date.now(); SUB.pausedMs = 0; logEvent('start', ''); }
+  if(SUB.paused) togglePause();
+  saveSub(); updateSubUI();
+}
+function nextSubmission(){
+  if(SUB.started){
+    const pending = targetsList().filter(t => { const ti = targetInfo(t.id); return ti.text && S.copied[t.id] == null && !ti.auto; });
+    if(pending.length && !confirmNext(pending.length)) return;
+    if(SUB.paused) togglePause();
+    logEvent('finish', '');
+    // the next submission starts now: reading time before the first tick counts
+    SUB = {seq:SUB.seq + 1, started:true, startedAt:Date.now(), paused:false, pausedAt:null, pausedMs:0};
+    logEvent('start', '');
+  }
+  S = freshState(); saveSub(); renderAll(); updateSubUI(); window.scrollTo(0, 0); flush();
+  toast('Ready for submission ' + SUB.seq);
+}
+function confirmNext(n){
+  if(confirmNext._armed && Date.now() - confirmNext._armed < 4000){ confirmNext._armed = 0; return true; }
+  confirmNext._armed = Date.now();
+  toast(`${n} comment${n > 1 ? 's' : ''} not copied yet. Press again to move on.`);
+  return false;
+}
+function togglePause(){
+  if(!SUB.started) return;
+  SUB.paused = !SUB.paused;
+  if(SUB.paused){ SUB.pausedAt = Date.now(); logEvent('pause', ''); }
+  else { SUB.pausedMs += Date.now() - (SUB.pausedAt || Date.now()); SUB.pausedAt = null; logEvent('resume', ''); }
+  saveSub(); updateSubUI();
+}
+function updateSubUI(){
+  $('#subLbl').textContent = 'Submission ' + SUB.seq;
+  $('#pauseBtn').textContent = SUB.paused ? 'Resume' : 'Pause';
+  $('#pauseBtn').disabled = !SUB.started;
+  tick();
+}
+function tick(){
+  if(!SUB) return;
+  let ms = 0;
+  if(SUB.started){ ms = (SUB.paused ? SUB.pausedAt : Date.now()) - SUB.startedAt - SUB.pausedMs; }
+  const s = Math.max(0, Math.floor(ms / 1000));
+  $('#timer').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  const dot = $('#timeDot');
+  dot.className = 'dot ' + (!CFG.endpoint ? '' : (QUEUE_FAIL ? 'off' : (LS.get('queue', []).length ? 'wait' : 'on')));
+  dot.title = !CFG.endpoint ? 'Timing is kept on this computer only (no endpoint configured)' : (QUEUE_FAIL ? 'Timing not reaching the server; will retry' : 'Timing synced');
+}
+setInterval(tick, 1000);
+
+/* event queue -> Apps Script endpoint */
+let QUEUE_FAIL = false, FLUSHING = false;
+function uid(){ return (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)); }
+function logEvent(type, target){
+  if(!A || !GRADER) return;
+  const ev = {id:uid(), ts:new Date().toISOString(), grader:GRADER, assignment:A.id, sub:SUB.seq, type, target, client:CLIENT};
+  const q = LS.get('queue', []); q.push(ev); LS.set('queue', q);
+  const hist = LS.get('history', []); hist.push(ev); if(hist.length > 5000) hist.splice(0, hist.length - 5000); LS.set('history', hist);
+  if(type !== 'copy') flush();
+}
+const CLIENT = LS.get('client', null) || (() => { const c = uid().slice(0, 8); LS.set('client', c); return c; })();
+async function flush(){
+  if(!CFG.endpoint || FLUSHING) return;
+  const q = LS.get('queue', []); if(!q.length) return;
+  FLUSHING = true;
+  const batch = q.slice(0, 200);
+  try{
+    const r = await fetch(CFG.endpoint, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({token:CFG.writeToken, events:batch})});
+    const j = await r.json();
+    if(j && j.ok){ const ids = new Set(batch.map(e => e.id)); LS.set('queue', LS.get('queue', []).filter(e => !ids.has(e.id))); QUEUE_FAIL = false; }
+    else QUEUE_FAIL = true;
+  }catch(e){ QUEUE_FAIL = true; }
+  FLUSHING = false; tick();
+}
+setInterval(flush, 20000);
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden' && CFG.endpoint){
+    const q = LS.get('queue', []); if(q.length && navigator.sendBeacon){ navigator.sendBeacon(CFG.endpoint, new Blob([JSON.stringify({token:CFG.writeToken, events:q.slice(0, 200)})], {type:'text/plain'})); }
+  }
+});
+
+/* ---------------- boot ---------------- */
+async function loadAssignment(id){
+  const f = MANIFEST.assignments.find(a => a.id === id) || MANIFEST.assignments[0];
+  $('#main').innerHTML = '<p class="muted" style="padding:20px 0">Loading…</p>';
+  const blob = await (await fetch('data/' + f.file, {cache:'no-cache'})).json();
+  A = await decrypt(blob);
+  LS.set('assignment', A.id);
+  focusTarget = null;
+  loadSub(); renderAll();
+}
+function afterUnlock(){
+  $('#asgSel').innerHTML = MANIFEST.assignments.map(a => `<option value="${a.id}">${esc(a.module)} · ${esc(a.title)}</option>`).join('');
+  $('#asgSel').value = LS.get('assignment', MANIFEST.assignments[0].id);
+  if(!$('#asgSel').value) $('#asgSel').value = MANIFEST.assignments[0].id;
+  if(!GRADER || !GRADERS.includes(GRADER)) return askWho();
+  start();
+}
+function askWho(){
+  $('#whoSel').innerHTML = '<option value="">Select your name…</option>' + GRADERS.map(g => `<option ${g === GRADER ? 'selected' : ''}>${esc(g)}</option>`).join('') + '<option value="__other">Someone else (course staff)</option>';
+  $('#who').classList.remove('hidden');
+}
+$('#whoBtn').addEventListener('click', () => {
+  let v = $('#whoSel').value; if(!v) return;
+  if(v === '__other'){ v = (prompt('Your name') || '').trim(); if(!v) return; }
+  GRADER = v; LS.set('grader', v); $('#who').classList.add('hidden'); start();
+});
+$('#graderPill').addEventListener('click', askWho);
+function start(){ $('#top').classList.remove('hidden'); loadAssignment($('#asgSel').value); }
+$('#asgSel').addEventListener('change', e => { if(SUB && SUB.started && SUB.paused === false){ /* switching keeps the in-progress submission saved */ } loadAssignment(e.target.value); });
+$('#nextBtn').addEventListener('click', nextSubmission);
+$('#pauseBtn').addEventListener('click', togglePause);
+$('#unlockBtn').addEventListener('click', unlock);
+$('#pass').addEventListener('keydown', e => { if(e.key === 'Enter') unlock(); });
+
+(async function boot(){
+  try{ MANIFEST = await (await fetch('data/manifest.json', {cache:'no-cache'})).json(); }
+  catch(e){ $('#unlockErr').textContent = 'Could not load the rubric data. Open this page from the published site, not from a file.'; $('#unlockErr').classList.remove('hidden'); return; }
+  const saved = LS.get('key:' + MANIFEST.kdf.salt, null);
+  if(saved){
+    try{ const k = await crypto.subtle.importKey('raw', b64d(saved), {name:'AES-GCM'}, true, ['decrypt']); if(await tryKey(k)){ $('#unlock').classList.add('hidden'); afterUnlock(); return; } }catch(e){}
+  }
+  $('#pass').focus();
+})();
+</script>
+</body>
+</html>

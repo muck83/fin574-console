@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Grading Rates Admin</title>
+<script src="config.js"></script>
+<style>
+:root{--bg:#ffffff;--panel:#f6f7f9;--card:#fff;--ink:#1d2330;--quiet:#5d6675;--line:#e3e7ee;--line2:#c9cfd9;--accent:#2563eb;--accent-soft:#bcd0fb;--grid:#eceff4;--warn:#9a6700;--warn-bg:#fff6dc;--bad:#b42318;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;color:var(--ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--panel:#1b1f26;--card:#20252d;--ink:#e7eaf0;--quiet:#9aa3b2;--line:#2e3540;--line2:#3a4250;--accent:#6ea0ff;--accent-soft:#2c4a84;--grid:#262c35;--warn:#f3c969;--warn-bg:#352b12;--bad:#ff8a7a}}
+:root[data-theme="dark"]{--bg:#14171c;--panel:#1b1f26;--card:#20252d;--ink:#e7eaf0;--quiet:#9aa3b2;--line:#2e3540;--line2:#3a4250;--accent:#6ea0ff;--accent-soft:#2c4a84;--grid:#262c35;--warn:#f3c969;--warn-bg:#352b12;--bad:#ff8a7a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink)}
+button,select,input{font:inherit;color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
+h1{font-size:20px;margin:0 0 4px}
+h2{font-size:15px;margin:26px 0 8px}
+.muted{color:var(--quiet)}.small{font-size:12px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:12px 0}
+.bar label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--quiet);font-weight:600}
+.bar input,.bar select{border:1px solid var(--line2);border-radius:8px;padding:6px 8px;background:var(--card);min-width:120px}
+.btn{border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:12px 0}
+.tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card)}
+.tile .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.tile .l{font-size:12px;color:var(--quiet);font-weight:600}
+.tile .s{font-size:12px;color:var(--quiet)}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;color:var(--quiet);font-weight:700;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--bg)}
+tr:hover td{background:var(--panel)}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.chart{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--card);position:relative}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;padding:6px 8px;border-radius:6px;white-space:nowrap;display:none;z-index:5}
+.msg{margin:10px 0;padding:8px 12px;border-radius:8px;background:var(--warn-bg);color:var(--warn);font-size:13px}
+.msg.err{color:var(--bad)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--quiet);margin:4px 0 6px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{display:inline-block;width:12px;height:10px;border-radius:2px;background:var(--accent)}
+.sw.w{height:2px;background:var(--ink)}
+details{margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Grading rates</h1>
+  <div class="muted small">Timing from the FIN 574 Grader Console. A submission runs from <b>Next submission</b> (or the grader's first tick) to the next <b>Next submission</b>. Gaps longer than the idle cap and paused time are not counted.</div>
+
+  <div class="bar" id="connect">
+    <label style="flex:2 1 320px">Apps Script web app URL<input id="ep" placeholder="https://script.google.com/macros/s/…/exec"></label>
+    <label style="flex:1 1 200px">Admin key<input id="key" type="password" placeholder="ADMIN_KEY"></label>
+    <button class="btn primary" id="loadBtn">Load data</button>
+    <label class="btn" style="flex-direction:row;align-items:center;color:var(--ink);font-size:14px">Load CSV export<input id="csv" type="file" accept=".csv,text/csv" style="display:none"></label>
+  </div>
+  <div id="status"></div>
+
+  <div id="dash" style="display:none">
+    <div class="bar">
+      <label>Assignment<select id="fA"></select></label>
+      <label>Grader<select id="fG"></select></label>
+      <label>From<input type="date" id="fFrom"></label>
+      <label>To<input type="date" id="fTo"></label>
+      <label>Idle cap (min)<input type="number" id="fIdle" min="1" max="120" step="1" style="min-width:80px;width:90px"></label>
+      <button class="btn" id="exportBtn">Export submissions CSV</button>
+    </div>
+
+    <div class="tiles" id="tiles"></div>
+
+    <h2>Minutes per submission, by grader</h2>
+    <div class="chart" id="chartWrap">
+      <div class="legend"><span><i class="sw"></i>Median</span><span><i class="sw w"></i>Middle half of submissions (25th–75th percentile)</span></div>
+      <div id="chart"></div><div class="tip" id="tip"></div>
+    </div>
+
+    <h2>By grader</h2>
+    <div class="scroll"><table id="tG"></table></div>
+
+    <h2>By assignment</h2>
+    <div class="scroll"><table id="tA"></table></div>
+
+    <h2>By day (for timesheet checks)</h2>
+    <div class="scroll"><table id="tD"></table></div>
+
+    <details><summary class="small muted">How these numbers are computed</summary>
+      <ul class="small muted">
+        <li><b>Active time</b> adds up the gaps between a grader's events inside one submission. A gap longer than the idle cap counts as the cap. Time between Pause and Resume is skipped.</li>
+        <li><b>Copy-to-copy</b> is the gap between two consecutive copies in a submission: reading the next part of the work, ticking deductions and pasting the previous comment. The console can't see the paste in Canvas, so this stands in for copy-to-paste time.</li>
+        <li><b>First copy</b> is the time from opening a submission to the first comment copied, mostly reading time.</li>
+        <li>Unfinished submissions (no Next submission yet) are counted separately and left out of the averages.</li>
+      </ul>
+    </details>
+  </div>
+</div>
+<script>
+'use strict';
+const CFG = Object.assign({endpoint:'', idleCapMinutes:10}, window.FIN574_CONFIG || {});
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {get(k,d){try{const v=localStorage.getItem('fin574admin.'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}}, set(k,v){try{localStorage.setItem('fin574admin.'+k,JSON.stringify(v));}catch(e){}}};
+let EVENTS = [];
+
+$('#ep').value = store.get('ep', CFG.endpoint || '');
+$('#key').value = store.get('key', '');
+$('#fIdle').value = store.get('idle', CFG.idleCapMinutes || 10);
+
+function status(msg, err){ $('#status').innerHTML = msg ? `<div class="msg ${err ? 'err' : ''}">${esc(msg)}</div>` : ''; }
+
+$('#loadBtn').addEventListener('click', async () => {
+  const ep = $('#ep').value.trim(), key = $('#key').value.trim();
+  if(!ep || !key){ status('Enter the web app URL and the admin key.', true); return; }
+  store.set('ep', ep); store.set('key', key);
+  status('Loading…');
+  try{
+    const r = await fetch(ep + (ep.includes('?') ? '&' : '?') + 'action=events&key=' + encodeURIComponent(key));
+    const j = await r.json();
+    if(!j.ok){ status(j.error === 'bad_key' ? 'The admin key was not accepted.' : 'The web app returned an error: ' + (j.error || 'unknown'), true); return; }
+    setEvents(j.events);
+  }catch(e){ status('Could not reach the web app. Check the URL and that the deployment allows "Anyone".', true); }
+});
+$('#csv').addEventListener('change', async e => {
+  const f = e.target.files[0]; if(!f) return;
+  const rows = parseCSV(await f.text());
+  const head = rows.shift().map(h => h.trim());
+  setEvents(rows.filter(r => r.length > 3).map(r => Object.fromEntries(head.map((h, i) => [h, r[i]]))));
+});
+function parseCSV(t){
+  const out = []; let row = [], cur = '', q = false;
+  for(let i = 0; i < t.length; i++){
+    const c = t[i];
+    if(q){ if(c === '"'){ if(t[i+1] === '"'){ cur += '"'; i++; } else q = false; } else cur += c; }
+    else if(c === '"') q = true;
+    else if(c === ','){ row.push(cur); cur = ''; }
+    else if(c === '\n' || c === '\r'){ if(c === '\r' && t[i+1] === '\n') i++; row.push(cur); out.push(row); row = []; cur = ''; }
+    else cur += c;
+  }
+  if(cur || row.length){ row.push(cur); out.push(row); }
+  return out;
+}
+function setEvents(list){
+  EVENTS = list.map(e => ({...e, t: Date.parse(e.ts), sub: Number(e.sub)})).filter(e => !isNaN(e.t));
+  if(!EVENTS.length){ status('No timing events yet. Graders need the console with the endpoint configured.'); $('#dash').style.display = 'none'; return; }
+  status('');
+  const as = [...new Set(EVENTS.map(e => e.assignment))].sort(), gs = [...new Set(EVENTS.map(e => e.grader))].sort();
+  $('#fA').innerHTML = '<option value="">All assignments</option>' + as.map(a => `<option>${esc(a)}</option>`).join('');
+  $('#fG').innerHTML = '<option value="">All graders</option>' + gs.map(g => `<option>${esc(g)}</option>`).join('');
+  $('#fA').value = store.get('fA', ''); if($('#fA').value === undefined) $('#fA').value = '';
+  $('#dash').style.display = '';
+  render();
+}
+['fA','fG','fFrom','fTo','fIdle'].forEach(id => $('#' + id).addEventListener('change', () => { store.set(id === 'fIdle' ? 'idle' : id, $('#' + id).value); render(); }));
+
+/* ---------- computation ---------- */
+function submissions(idleCapMin){
+  const cap = idleCapMin * 60000;
+  const groups = new Map();
+  EVENTS.forEach(e => { const k = [e.grader, e.assignment, e.client, e.sub].join('|'); (groups.get(k) || groups.set(k, []).get(k)).push(e); });
+  const subs = [];
+  groups.forEach(evs => {
+    evs.sort((a, b) => a.t - b.t);
+    // a submission opened with Next and left overnight: start the clock at the first real action
+    while(evs.length > 1 && evs[0].type === 'start' && evs[1].t - evs[0].t > cap) evs.shift();
+    let active = 0, paused = false, idleCut = 0;
+    for(let i = 1; i < evs.length; i++){
+      const gap = evs[i].t - evs[i-1].t;
+      if(evs[i-1].type === 'pause'){ paused = true; }
+      if(evs[i-1].type === 'resume'){ paused = false; }
+      if(paused) continue;
+      if(gap > cap){ idleCut += gap - cap; active += cap; } else active += gap;
+    }
+    const copies = evs.filter(e => e.type === 'copy');
+    const gaps = [];
+    for(let i = 1; i < copies.length; i++){
+      // skip the pause window if one falls between the two copies
+      const between = evs.filter(e => e.t > copies[i-1].t && e.t < copies[i].t && (e.type === 'pause' || e.type === 'resume'));
+      if(!between.length) gaps.push(Math.min(copies[i].t - copies[i-1].t, cap));
+    }
+    const first = evs[0];
+    subs.push({grader:first.grader, assignment:first.assignment, client:first.client, sub:first.sub,
+      start:first.t, end:evs[evs.length-1].t, finished:evs.some(e => e.type === 'finish'),
+      activeMin:active / 60000, copies:copies.length, copyGapsSec:gaps.map(g => g / 1000),
+      firstCopySec: copies.length ? Math.min(copies[0].t - first.t, cap) / 1000 : null, idleCutMin: idleCut / 60000,
+      day:new Date(first.t).toLocaleDateString('en-CA')});
+  });
+  return subs;
+}
+const median = a => quantile(a, .5);
+function quantile(a, p){ if(!a.length) return null; const s = [...a].sort((x, y) => x - y); const i = (s.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); }
+const mean = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
+const f1 = v => v == null ? '–' : (Math.round(v * 10) / 10).toFixed(1);
+const f0 = v => v == null ? '–' : Math.round(v).toString();
+const mmss = sec => sec == null ? '–' : Math.floor(sec / 60) + ':' + String(Math.round(sec % 60)).padStart(2, '0');
+function stats(list){
+  const done = list.filter(s => s.finished);
+  const mins = done.map(s => s.activeMin);
+  const hours = mins.reduce((a, b) => a + b, 0) / 60;
+  const gaps = done.flatMap(s => s.copyGapsSec);
+  return {n:done.length, open:list.length - done.length, med:median(mins), mean:mean(mins), p25:quantile(mins, .25), p75:quantile(mins, .75),
+    p90:quantile(mins, .9), hours, perHour: hours >= 0.1 ? done.length / hours : null, gapMed:median(gaps),
+    firstMed:median(done.map(s => s.firstCopySec).filter(v => v != null)), copies:mean(done.map(s => s.copies)),
+    days:new Set(list.map(s => s.day)).size};
+}
+
+/* ---------- render ---------- */
+let SORT = {tG:['med', 1], tA:['assignment', 1], tD:['day', -1]};
+function filtered(){
+  const idle = +$('#fIdle').value || 10;
+  const a = $('#fA').value, g = $('#fG').value, from = $('#fFrom').value, to = $('#fTo').value;
+  return submissions(idle).filter(s => (!a || s.assignment === a) && (!g || s.grader === g) && (!from || s.day >= from) && (!to || s.day <= to));
+}
+function groupBy(list, keyFn){ const m = new Map(); list.forEach(s => { const k = keyFn(s); (m.get(k) || m.set(k, []).get(k)).push(s); }); return m; }
+function render(){
+  const subs = filtered();
+  const all = stats(subs);
+  $('#tiles').innerHTML = [
+    ['Submissions finished', f0(all.n), all.open ? `${all.open} still open` : 'none open'],
+    ['Median minutes per submission', f1(all.med), all.p25 != null ? `middle half ${f1(all.p25)}–${f1(all.p75)} min` : ''],
+    ['Submissions per active hour', f1(all.perHour), `${f1(all.hours)} active hours`],
+    ['Median copy-to-copy', mmss(all.gapMed), `first copy after ${mmss(all.firstMed)}`],
+  ].map(([l, v, s]) => `<div class="tile"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  const byG = [...groupBy(subs, s => s.grader)].map(([grader, l]) => ({grader, ...stats(l)}));
+  table('tG', byG, [['grader','Grader','s'],['n','Finished','0'],['med','Median min','1'],['mean','Mean min','1'],['p90','90th pct min','1'],['perHour','Subs / hour','1'],['hours','Active hours','1'],['gapMed','Copy-to-copy','t'],['firstMed','First copy','t'],['copies','Copies / sub','1'],['open','Open','0'],['days','Days','0']]);
+  const byA = [...groupBy(subs, s => s.assignment)].map(([assignment, l]) => ({assignment, graders:new Set(l.map(s => s.grader)).size, ...stats(l)}));
+  table('tA', byA, [['assignment','Assignment','s'],['graders','Graders','0'],['n','Finished','0'],['med','Median min','1'],['p90','90th pct min','1'],['perHour','Subs / hour','1'],['hours','Active hours','1'],['gapMed','Copy-to-copy','t'],['open','Open','0']]);
+  const byD = [...groupBy(subs, s => s.day + '|' + s.grader)].map(([k, l]) => ({day:k.split('|')[0], grader:k.split('|')[1], assignments:[...new Set(l.map(s => s.assignment))].join(', '), ...stats(l)}));
+  table('tD', byD, [['day','Date','s'],['grader','Grader','s'],['assignments','Assignments','s'],['n','Finished','0'],['hours','Active hours','1'],['med','Median min','1'],['perHour','Subs / hour','1']]);
+  chart(byG.filter(g => g.n > 0));
+}
+function table(id, rows, cols){
+  const [k, dir] = SORT[id];
+  rows.sort((a, b) => { const x = a[k], y = b[k]; if(x == null) return 1; if(y == null) return -1; return (typeof x === 'string' ? x.localeCompare(y) : x - y) * dir; });
+  const cell = (v, t) => t === 's' ? esc(v) : t === '0' ? f0(v) : t === 't' ? mmss(v) : f1(v);
+  $('#' + id).innerHTML = `<thead><tr>${cols.map(([c, l]) => `<th data-t="${id}" data-c="${c}" style="${cols.find(x => x[0] === c)[2] === 's' ? 'text-align:left' : ''}">${l}${c === k ? (dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r => `<tr>${cols.map(([c, , t]) => `<td${t === 's' ? ' style="text-align:left"' : ''}>${cell(r[c], t)}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length}" class="muted">No submissions in this filter.</td></tr>`}</tbody>`;
+}
+document.addEventListener('click', e => {
+  const th = e.target.closest('th[data-t]'); if(!th) return;
+  const id = th.dataset.t, c = th.dataset.c;
+  SORT[id] = SORT[id][0] === c ? [c, -SORT[id][1]] : [c, 1]; render();
+});
+function chart(rows){
+  rows = [...rows].sort((a, b) => a.med - b.med);
+  const el = $('#chart');
+  if(!rows.length){ el.innerHTML = '<div class="muted small">No finished submissions yet.</div>'; return; }
+  const W = Math.max(320, el.clientWidth || 700), rowH = 28, padL = 170, padR = 60, top = 8, H = top + rows.length * rowH + 28;
+  const max = Math.max(...rows.map(r => r.p75 || r.med)) * 1.1 || 1;
+  const x = v => padL + (W - padL - padR) * v / max;
+  const step = max > 40 ? 10 : max > 20 ? 5 : max > 8 ? 2 : 1;
+  let ticks = ''; for(let v = 0; v <= max; v += step) ticks += `<line x1="${x(v)}" x2="${x(v)}" y1="${top}" y2="${H - 22}" stroke="var(--grid)"/><text x="${x(v)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--quiet)">${v}</text>`;
+  const bars = rows.map((r, i) => {
+    const y = top + i * rowH, cy = y + rowH / 2;
+    return `<g class="row" data-i="${i}">
+      <rect x="0" y="${y}" width="${W}" height="${rowH}" fill="transparent"/>
+      <text x="${padL - 8}" y="${cy + 4}" text-anchor="end" font-size="12" fill="var(--ink)">${esc(r.grader)}</text>
+      <path d="M${padL} ${cy - 7}H${x(r.med) - 4}a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4H${padL}Z" fill="var(--accent)"/>
+      ${r.p25 != null ? `<line x1="${x(r.p25)}" x2="${x(r.p75)}" y1="${cy}" y2="${cy}" stroke="var(--ink)" stroke-width="2"/><line x1="${x(r.p25)}" x2="${x(r.p25)}" y1="${cy - 4}" y2="${cy + 4}" stroke="var(--ink)" stroke-width="2"/><line x1="${x(r.p75)}" x2="${x(r.p75)}" y1="${cy - 4}" y2="${cy + 4}" stroke="var(--ink)" stroke-width="2"/>` : ''}
+      <text x="${x(Math.max(r.med, r.p75 || 0)) + 6}" y="${cy + 4}" font-size="11" fill="var(--quiet)">${f1(r.med)}</text>
+    </g>`;
+  }).join('');
+  el.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="Median minutes per submission by grader">${ticks}<line x1="${padL}" x2="${padL}" y1="${top}" y2="${H - 22}" stroke="var(--line2)"/>${bars}</svg>`;
+  const tip = $('#tip');
+  el.querySelectorAll('g.row').forEach(g => {
+    g.addEventListener('mousemove', ev => {
+      const r = rows[+g.dataset.i];
+      tip.innerHTML = `<b>${esc(r.grader)}</b><br>Median ${f1(r.med)} min · middle half ${f1(r.p25)}–${f1(r.p75)}<br>${r.n} finished · ${f1(r.perHour)} per active hour`;
+      const box = $('#chartWrap').getBoundingClientRect();
+      tip.style.display = 'block'; tip.style.left = Math.min(ev.clientX - box.left + 12, box.width - 230) + 'px'; tip.style.top = (ev.clientY - box.top + 12) + 'px';
+    });
+    g.addEventListener('mouseleave', () => tip.style.display = 'none');
+  });
+}
+window.addEventListener('resize', () => { if(EVENTS.length) render(); });
+$('#exportBtn').addEventListener('click', () => {
+  const subs = filtered();
+  const head = ['grader','assignment','day','start','end','finished','active_minutes','copies','median_copy_gap_sec','first_copy_sec'];
+  const lines = [head.join(',')].concat(subs.map(s => [s.grader, s.assignment, s.day, new Date(s.start).toISOString(), new Date(s.end).toISOString(), s.finished, s.activeMin.toFixed(2), s.copies, median(s.copyGapsSec)?.toFixed(1) ?? '', s.firstCopySec?.toFixed(1) ?? ''].map(v => /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : v).join(',')));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([lines.join('\n')], {type:'text/csv'})); a.download = 'fin574-grading-submissions.csv'; a.click();
+});
+if($('#ep').value && $('#key').value) $('#loadBtn').click();
+</script>
+</body>
+</html>
