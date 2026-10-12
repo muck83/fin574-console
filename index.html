@@ -71,6 +71,12 @@ details.key[open]>summary:before{content:"▾"}
 .keybody h4{margin:10px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--quiet)}
 .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .thumbs img{max-height:120px;max-width:100%;border:1px solid var(--line2);border-radius:6px;cursor:zoom-in;background:#fff}
+.figs{display:grid;gap:10px;margin:10px 0}
+.fig{margin:0;border:1px solid var(--line);border-radius:var(--r);background:#fff;overflow:hidden}
+.fig img{display:block;width:100%;max-height:380px;object-fit:contain;cursor:zoom-in;background:#fff}
+.card .figs{margin:4px 12px 8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.card .fig img{max-height:200px}
+.fig figcaption{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#5d6675;padding:5px 10px;border-top:1px solid #e3e7ee;background:#f6f7f9;display:flex;justify-content:space-between}
 .flag{margin:8px 0;border:1px solid var(--flag);background:var(--flag-bg);color:var(--flag);border-radius:var(--r);padding:8px 12px;font-size:13px;white-space:pre-wrap}
 .qnote{margin:8px 0;border:1px solid var(--warn-line);background:var(--warn-bg);border-radius:var(--r);padding:8px 12px;font-size:13px;white-space:pre-wrap}
 .part{margin:14px 0 4px;font-weight:700;font-size:13px;color:var(--quiet);text-transform:uppercase;letter-spacing:.03em}
@@ -434,6 +440,7 @@ function renderCrit(c, q){
   return `<section class="card" id="card-${c.id}" data-target="${A.mode === 'criterion' ? c.id : q.id}">
     <div class="chead"><div><div class="cname">${esc(c.name)}</div>${c.desc ? `<div class="cdesc">${esc(c.desc)}</div>` : ''}</div><div class="cpts">${pts}</div></div>
     ${c.pills.length ? `<div class="pills">${c.pills.map(p => `<span class="vpill">${esc(p)}</span>`).join('')}</div>` : ''}
+    ${renderFigures(c.images || [])}
     ${rating}
     ${c.fullCredit && !isRatingCrit(c) ? `<div class="fc">Full-credit comment available: copied automatically when nothing is ticked.</div>` : ''}
     <div class="blocks">${blocks}</div>
@@ -460,6 +467,11 @@ function renderComposer(id){
     ${state === 'changed' ? '<div class="warnline">Changed since you copied. Copy again and replace the comment in Canvas.</div>' : ''}
   </div>`;
 }
+const FIGLABEL = {question:'Question figure', answer:'Answer key', example:'Rubric figure'};
+function renderFigures(list){
+  if(!list.length) return '';
+  return `<div class="figs">${list.map((im, i) => `<figure class="fig"><img src="${im.data}" data-act="zoom" alt="${FIGLABEL[im.role] || 'Figure'}" loading="lazy"><figcaption><span>${FIGLABEL[im.role] || 'Figure'}${list.length > 1 ? ' ' + (i + 1) : ''}</span><span>${im.role === 'example' ? 'Enlarge' : 'Click to enlarge'}</span></figcaption></figure>`).join('')}</div>`;
+}
 function renderImages(list){
   if(!list.length) return '';
   return `<div class="thumbs">${list.map(im => `<img src="${im.data}" data-act="zoom" alt="${im.role === 'question' ? 'Question figure' : 'Answer key figure'}" loading="lazy">`).join('')}</div>`;
@@ -469,7 +481,7 @@ function renderQuestion(q){
     if(!inScopeInfo(q)) return '';
     const body = [...q.prompt, ...(q.answer.length ? ['Answer:\n' + q.answer.join('\n\n')] : [])].join('\n\n');
     return `<details class="info" id="q-${q.id}"><summary>${esc(q.title)}${q.kind === 'auto' ? ' · autograded, no grading needed' : ''}</summary>
-      <div class="keybody">${esc(body)}</div>${renderImages(q.images)}${q.notes.map(n => `<div class="${n.kind === 'flag' ? 'flag' : 'qnote'}">${esc(n.text)}</div>`).join('')}</details>`;
+      <div class="keybody">${esc(body)}</div>${renderFigures(q.images)}${q.notes.map(n => `<div class="${n.kind === 'flag' ? 'flag' : 'qnote'}">${esc(n.text)}</div>`).join('')}</details>`;
   }
   if(!inScope(q.id)) return '';
   const qImgs = q.images.filter(i => i.role === 'question'), aImgs = q.images.filter(i => i.role === 'answer');
@@ -478,10 +490,10 @@ function renderQuestion(q){
   return `<div class="q" id="q-${q.id}">
     <div class="qhead"><h2>${esc(q.title)}</h2><span class="qscore" id="qs-${q.id}">${fmt(qScore(q))} / ${fmt(qMax(q))}</span></div>
     ${q.notes.map(n => `<div class="${n.kind === 'flag' ? 'flag' : 'qnote'}">${n.kind === 'flag' ? '<b>Integrity check · </b>' : '<b>Grader only · </b>'}${esc(n.text)}</div>`).join('')}
-    <details class="key" ${keyOpen} data-keytoggle="1"><summary>Question and answer key${aImgs.length ? ` · ${aImgs.length} figure${aImgs.length > 1 ? 's' : ''}` : ''}</summary>
-      <div class="keybody">${q.prompt.length ? `<h4>Question</h4>${esc(q.prompt.join('\n\n'))}` : ''}${renderImages(qImgs)}${q.answer.length ? `<h4>Answer key</h4>${esc(q.answer.join('\n\n'))}` : ''}</div>
-      <div style="padding:0 12px 6px">${renderImages(aImgs)}</div>
+    <details class="key" ${keyOpen} data-keytoggle="1"><summary>Question and answer key (text)</summary>
+      <div class="keybody">${q.prompt.length ? `<h4>Question</h4>${esc(q.prompt.join('\n\n'))}` : ''}${q.answer.length ? `<h4>Answer key</h4>${esc(q.answer.join('\n\n'))}` : ''}</div>
     </details>
+    ${renderFigures([...qImgs, ...aImgs])}
     ${nodes}
     ${A.mode === 'question' ? renderComposer(q.id) : ''}
   </div>`;
