@@ -1,0 +1,80 @@
+{
+ "course": "FIN 574",
+ "term": "SP26",
+ "kdf": {
+  "salt": "RZKQhlEwATtJkt4mLHAKTQ==",
+  "iter": 250000
+ },
+ "check": {
+  "iv": "0wVbpcmj2yFZcImA",
+  "ct": "j45iQJ977cHR9SrbDlQK0BrDeEIPFz4TUVWlgFwzsQV7aT7deASIjBtIaVJ6eJgYj/Gpq49W1ve6ZjEQ0gZSgsdJfsj8dlHWvUL1lj6S6gbcUmA1bAXNsB2P7RuidZPcNgKksDLMT0sH16EwGU+XzKXzCvcu87P2s+qGjoi5IgTflq2CBKF5mR2t3zw0Io/wgswebK57oOuBqzP62a0oz7VIUtarQNUG72fFZLfcF5XgLJfd286FA9NvkjzYTLJhZLdAItagg5VK0hJHOyo1ZUU9dYJlbBJsr5NqMOMboAzXY354RvKfaCVgDynEh1ChGTOp8PHWxvfifDhUbWjTozBSYLEh5VUh9pQI4v+/6UDX1nQJ+mOLPJqXcKXLe3vDmDSN+uO1BlUk8igGx5qCO7NuFvQsZ5zeq8NMrGWvDm65bXZ5SnvN0JrkF/Hg"
+ },
+ "assignments": [
+  {
+   "id": "M0-IA1",
+   "module": "M0",
+   "title": "Individual Assignment 1 (Extra Credit)",
+   "file": "M0-IA1.json"
+  },
+  {
+   "id": "M1-IA2",
+   "module": "M1",
+   "title": "Individual Assignment 2",
+   "file": "M1-IA2.json"
+  },
+  {
+   "id": "M2-IA3",
+   "module": "M2",
+   "title": "Individual Assignment 3",
+   "file": "M2-IA3.json"
+  },
+  {
+   "id": "M3-IA4",
+   "module": "M3",
+   "title": "Individual Assignment 4 (Timed Quiz)",
+   "file": "M3-IA4.json"
+  },
+  {
+   "id": "M3-TA1",
+   "module": "M3",
+   "title": "Team Assignment 1",
+   "file": "M3-TA1.json"
+  },
+  {
+   "id": "M4-MID",
+   "module": "M4",
+   "title": "Midterm Exam",
+   "file": "M4-MID.json"
+  },
+  {
+   "id": "M4-TA2",
+   "module": "M4",
+   "title": "Team Assignment 2",
+   "file": "M4-TA2.json"
+  },
+  {
+   "id": "M5-IA5",
+   "module": "M5",
+   "title": "Individual Assignment 5 (Untimed Quiz)",
+   "file": "M5-IA5.json"
+  },
+  {
+   "id": "M6-TA3",
+   "module": "M6",
+   "title": "Team Assignment 3",
+   "file": "M6-TA3.json"
+  },
+  {
+   "id": "M7-TA4",
+   "module": "M7",
+   "title": "Team Assignment 4",
+   "file": "M7-TA4.json"
+  },
+  {
+   "id": "M8-FIN",
+   "module": "M8",
+   "title": "Final Exam",
+   "file": "M8-FIN.json"
+  }
+ ]
+}
